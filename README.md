@@ -4,7 +4,9 @@ Video Application
 
 • Supabase Storage Setup: Set up a Supabase project and configure a storage bucket for video files. Ensure that your bucket allows for sufficient file sizes to accommodate video content.
 
-• Video Upload API: Create an API endpoint that allows users to upload a video file. The API should convert all uploads to a standard MP4 video format. Use a multipart form data upload. This video should then be stored in the Supabase storage bucket you configured.
+• Video Upload API: Create an API endpoint that allows users to upload a video file. 
+The API should convert all uploads to a standard MP4 video format. Use a multipart form data upload. 
+This video should then be stored in the Supabase storage bucket you configured.
 
 • Video Merging API: Implement an API endpoint that accepts two video IDs. This endpoint should trigger a video processing function that fetches the two corresponding videos from Supabase storage and merges them into one video using FFmpeg. Consider the following:
 Extract a 30-second clip from each video:

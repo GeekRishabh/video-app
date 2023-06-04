@@ -14,7 +14,7 @@ COPY ./tsconfig.json ./
 
 RUN npm install -g @nestjs/cli
 RUN npm install husky -g
-
+RUN npm install -g fluent-ffmpeg
 RUN wget https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.4.1-arm64-static.tar.xz &&\
     tar xvf ffmpeg-4.4.1-arm64-static.tar.xz &&\
     mv ffmpeg-4.4.1-arm64-static/ffmpeg /usr/bin/ &&\

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createFFmpeg } from '@ffmpeg/ffmpeg';
+import * as ffmpeg from 'fluent-ffmpeg';
 
 import { SupabaseService } from '../supabase/supabase.service';
 @Injectable()
@@ -19,18 +20,19 @@ export class VideoService {
       if (!bucket.data || bucket.data === null) {
         await this.supabaseService.createBucket(bucketName);
       }
+      console.log(file, 'file');
+      // Make file convert to mp4
+      // const processedFile = this.convert(file); //
+      return await this.supabaseService.uploadFile(
+        process.env.UPLOAD_BUCKETNAME,
+        file,
+      );
+      // const blob = data;
+      // const buffer = Buffer.from( await blob.arrayBuffer() );
+      // await fs.promises.writeFile(fileName, buffer);
     } catch (error) {
       console.log(error, 'upload error');
     }
-    //       const fileName = 'some-file.png'
-    // const filePath = 'some-folder/' + fileName
-    // const { data, error } = await supabase.storage
-    //         .from('storage-name')
-    //         .download(filePath)
-
-    // const blob = data;
-    // const buffer = Buffer.from( await blob.arrayBuffer() );
-    // await fs.promises.writeFile(fileName, buffer);
   }
 
   async deleteFile(fileName: string) {
@@ -62,5 +64,17 @@ export class VideoService {
     } catch (error) {
       console.log(error, 'Merge Service Error');
     }
+  }
+
+  private async convert(file: any) {
+    // Create a command to convert source.avi to MP4
+    let command = ffmpeg();
+    command = ffmpeg('/path/to/source.avi')
+      .audioCodec('libfaac')
+      .videoCodec('libx264')
+      .format('mp4');
+
+    // Save a converted version with the original size
+    command.save('/path/to/output-original-size.mp4');
   }
 }

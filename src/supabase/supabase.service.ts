@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { StorageClient } from '@supabase/storage-js';
 
+import { getRootPath, blobToFile } from '../utils/';
 @Injectable()
 export class SupabaseService {
   private readonly supabase = createClient(
@@ -18,11 +19,24 @@ export class SupabaseService {
   );
 
   public async uploadFile(bucketName: string, file: any) {
-    return await this.storageClient.from(bucketName).upload('/', file);
+    return await this.storageClient
+      .from(bucketName)
+      .upload(file.originalname, file.buffer);
   }
 
   public async downloadFile(bucketName: string, fileName: string) {
-    return await this.storageClient.from(bucketName).download(fileName);
+    console.log(bucketName, fileName, 'fileNamefileName');
+    const { data, error } = await this.storageClient
+      .from(bucketName.trim())
+      .download(`/${fileName}`);
+
+    const string = await data.text();
+    const type = data.type;
+    console.log(type, data, 'datadatadatadata');
+    console.log('errorerrorerror', error);
+    const response = blobToFile(data, getRootPath());
+    console.log(response, 'response');
+    return data;
   }
 
   public async emptyBucket(bucketName: string) {
@@ -37,11 +51,15 @@ export class SupabaseService {
     return await this.storageClient.listBuckets();
   }
 
-  public async createBucket(bucketName: string) {
+  public async createBucket(
+    bucketName: string,
+    isPublic = false,
+    fileSizeLimit = 20971520,
+  ) {
     return await this.storageClient.createBucket(bucketName, {
-      public: true,
-      // allowedMimeTypes: ['image/png'],
-      fileSizeLimit: 20971520, // size in bytes 20MB
+      public: isPublic,
+      allowedMimeTypes: ['video/*'], //All video type is allowed
+      fileSizeLimit, // size in bytes defaulted to 20 MB
     });
   }
 
@@ -53,12 +71,13 @@ export class SupabaseService {
     bucketName: string,
     limit = 100,
     offset = 0,
-    order = 'asc',
+    sortByKey = 'created_at',
+    order = 'desc',
   ) {
-    return await this.storageClient.from(bucketName).list('/', {
+    return await this.storageClient.from(bucketName).list('', {
       limit,
       offset,
-      sortBy: { column: 'name', order: order },
+      sortBy: { column: sortByKey, order },
     });
   }
 
