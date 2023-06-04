@@ -1,0 +1,97 @@
+# Name of this workflow
+name: Build and Push to PROD
+
+on:
+  workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Enter the deployment tag: v1.0 || v1.1 || etc...'
+          required: true
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_ECR}}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_ECR }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  ECR_REPOSITORY: book-store
+  TAG: ${{ github.event.inputs.tag }}
+
+jobs:
+  build:
+    name: Build-and-Push-Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Extract branch name
+      run: |
+        echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      shell: bash
+      id: extract_branch
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Create ECR
+      id: create-ecr
+      uses: int128/create-ecr-repository-action@v1
+      with:
+        repository: ${{ env.ECR_REPOSITORY }}
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        IMAGE_TAG: ${{ env.TAG }}-${{ env.BRANCH_NAME }}
+      run: |
+        # Build a docker container and push it to ECR
+
+        docker build -f Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Logout of Amazon ECR
+      if: always()
+      run: docker logout ${{ steps.login-ecr.outputs.registry }}
+
+  deploy:
+    name: Deploy-and-Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Devops Repo
+      uses: actions/checkout@v3
+      with:
+        repository: Geekrishabh/Devops
+        token: ${{ secrets.DEVOPS_REPO_TOKEN }}
+    
+    - name: Extract branch name
+      shell: bash
+      run: |
+        echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      id: extract_branch
+
+    - name: Update the latest tag in K8's Manifest in Devops Repo
+      id: yq
+      uses: mikefarah/yq@master
+      with:
+        cmd: yq -i '.image.tag = "${{ env.TAG }}-${{ env.BRANCH_NAME }}"' "applications/$REPO_NAME/values-prod-aws.yaml"
+
+    - name: Commit and Push back the Changes
+      if: ${{ success() }}
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Updating $BRANCH_NAME env tag with '${{ steps.yq.outputs.result }}'"

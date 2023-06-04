@@ -1,30 +1,22 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Video Application 
+
+• Supabase Storage Setup: Set up a Supabase project and configure a storage bucket for video files. Ensure that your bucket allows for sufficient file sizes to accommodate video content.
+
+• Video Upload API: Create an API endpoint that allows users to upload a video file. The API should convert all uploads to a standard MP4 video format. Use a multipart form data upload. This video should then be stored in the Supabase storage bucket you configured.
+• Video Merging API: Implement an API endpoint that accepts two video IDs. This endpoint should trigger a video processing function that fetches the two corresponding videos from Supabase storage and merges them into one video using FFmpeg. Consider the following:
+Extract a 30-second clip from each video:
+Merge both videos in sequential order (i.e. the second video follows the first)
+Add a watermark to the merged video. 
+The watermark should be a static image that you can generate. It should appear in the bottom right corner of the video.
+The output video should have the same format as the input videos
+The output video should be uploaded back to Supabase storage in a designated "merged" folder within your bucket
+
+• Video Metadata API: Create a new API endpoint that accepts a video ID and returns the metadata of the video. The Metadata returned should include the duration, the format, the codec, the resolution, the bitrate, and the frame rate. You'll need to use the ffprobe tool from the FFmpeg suite to extract this information.
+
+• Download API: The merged video should then be accessible to the user via a download link, provided through another API endpoint.
+Dockerization: Dockerize the application ensuring all dependencies (like FFmpeg) are included in the Docker image. Write a Dockerfile that can be used to build a Docker image of the service.
 
 ## Installation
 
@@ -58,16 +50,14 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Support
+## Swagger
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Swagger Docs are available at
+Dev Env -> http://localhost:3000/api
 
-## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Deploying on Docker
 
-## License
+docker build -t video-app .
 
-Nest is [MIT licensed](LICENSE).
+docker run -dp 3000:3000 --name video-app video-app
