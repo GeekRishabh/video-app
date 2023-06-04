@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
+import { StorageClient } from '@supabase/storage-js';
 
 @Injectable()
 export class SupabaseService {
@@ -8,94 +9,44 @@ export class SupabaseService {
     process.env.SUPABASE_APIKEY,
   );
 
+  private readonly storageClient = new StorageClient(
+    process.env.SUPABASE_STORAGE_URL,
+    {
+      apikey: process.env.SUPABASE_SERVICEROLE,
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICEROLE}`,
+    },
+  );
+
   public async uploadFile(bucketName: string, file: any) {
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .upload('/', file);
-    if (error) {
-      // Handle error
-      console.log(error, 'error uploadFile');
-    } else {
-      // Handle success
-      console.log(data, 'uploadFile');
-    }
+    return await this.storageClient.from(bucketName).upload('/', file);
   }
 
   public async downloadFile(bucketName: string, fileName: string) {
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .download(fileName);
-    if (error) {
-      // Handle error
-      console.log(error, 'error downloadFile');
-    } else {
-      // Handle success
-      console.log(data, 'das downloadFile');
-    }
+    return await this.storageClient.from(bucketName).download(fileName);
   }
 
   public async emptyBucket(bucketName: string) {
-    const { data, error } = await this.supabase.storage.emptyBucket(bucketName);
-    if (error) {
-      // Handle error
-      console.log(error, 'error emptyBucket');
-    } else {
-      // Handle success
-      console.log(data, 'Success emptyBucket');
-    }
+    return await this.storageClient.emptyBucket(bucketName);
   }
 
   public async deleteBucket(bucketName: string) {
-    const { data, error } = await this.supabase.storage.deleteBucket(
-      bucketName,
-    );
-    if (error) {
-      // Handle error
-      console.log(error, 'error deleteBucket');
-    } else {
-      // Handle success
-      console.log(data, 'Success deleteBucket');
-    }
+    return await this.storageClient.deleteBucket(bucketName);
   }
 
   public async listBuckets() {
-    const { data, error } = await this.supabase.storage.listBuckets();
-    if (error) {
-      // Handle error
-      console.log(error, 'error listBuckets');
-    } else {
-      // Handle success
-      console.log(data, 'Success listBuckets');
-    }
+    return await this.storageClient.listBuckets();
   }
 
   public async createBucket(bucketName: string) {
-    const { data, error } = await this.supabase.storage.createBucket(
-      bucketName,
-      {
-        public: false,
-        // allowedMimeTypes: ['image/png'],
-        // fileSizeLimit: 1024 // size in bytes
-      },
-    );
-    if (error) {
-      // Handle error
-      console.log(error, 'error createBuckets');
-    } else {
-      // Handle success
-      console.log(data, 'Success createBuckets');
-    }
+    return await this.storageClient.createBucket(bucketName, {
+      public: true,
+      // allowedMimeTypes: ['image/png'],
+      fileSizeLimit: 20971520, // size in bytes 20MB
+    });
   }
 
   public async fetchBucket(bucketName: string) {
-    const { data, error } = await this.supabase.storage.getBucket(bucketName);
-    if (error) {
-      // Handle error
-      console.log(error, 'error fetchBuckets');
-    } else {
-      // Handle success
-      console.log(data, 'Success fetchBuckets');
-    }
+    return await this.storageClient.getBucket(bucketName.trim());
   }
 
   public async listFilesfromBucket(
@@ -104,19 +55,20 @@ export class SupabaseService {
     offset = 0,
     order = 'asc',
   ) {
-    const { data, error } = await this.supabase.storage
+    return await this.storageClient.from(bucketName).list('/', {
+      limit,
+      offset,
+      sortBy: { column: 'name', order: order },
+    });
+  }
+
+  public async deleteFilefromBucket(bucketName: string, fileName: string) {
+    return await this.storageClient.from(bucketName).remove([`/${fileName}`]);
+  }
+
+  public async getSignedUrl(bucketName: string, fileName: string) {
+    return await this.storageClient
       .from(bucketName)
-      .list('/', {
-        limit,
-        offset,
-        sortBy: { column: 'name', order: order },
-      });
-    if (error) {
-      // Handle error
-      console.log(error, 'error listFilesfromBucket');
-    } else {
-      // Handle success
-      console.log(data, 'Success listFilesfromBucket');
-    }
+      .createSignedUrl(`/${fileName}`, 360000);
   }
 }
