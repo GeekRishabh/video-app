@@ -29,6 +29,8 @@ $ npm install
 
 ## Running the app
 
+Make sure you add value for `.env` in the same format as `.env.example` to run this application. 
+
 ```bash
 # development
 $ npm run start
