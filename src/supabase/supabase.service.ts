@@ -69,7 +69,7 @@ export class SupabaseService {
     }
   }
 
-  public async createBuckets(bucketName: string) {
+  public async createBucket(bucketName: string) {
     const { data, error } = await this.supabase.storage.createBucket(
       bucketName,
       {
@@ -87,7 +87,7 @@ export class SupabaseService {
     }
   }
 
-  public async fetchBuckets(bucketName: string) {
+  public async fetchBucket(bucketName: string) {
     const { data, error } = await this.supabase.storage.getBucket(bucketName);
     if (error) {
       // Handle error
@@ -95,6 +95,28 @@ export class SupabaseService {
     } else {
       // Handle success
       console.log(data, 'Success fetchBuckets');
+    }
+  }
+
+  public async listFilesfromBucket(
+    bucketName: string,
+    limit = 100,
+    offset = 0,
+    order = 'asc',
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .list('/', {
+        limit,
+        offset,
+        sortBy: { column: 'name', order: order },
+      });
+    if (error) {
+      // Handle error
+      console.log(error, 'error listFilesfromBucket');
+    } else {
+      // Handle success
+      console.log(data, 'Success listFilesfromBucket');
     }
   }
 }
