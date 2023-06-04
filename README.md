@@ -1,10 +1,11 @@
 ## Description
 
-Video Application 
+### Video Application 
 
-• Supabase Storage Setup: Set up a Supabase project and configure a storage bucket for video files. Ensure that your bucket allows for sufficient file sizes to accommodate video content.
+✅ Supabase Storage Setup: Set up a Supabase project and configure a storage bucket for video files. Ensure that your bucket allows for sufficient file sizes to accommodate video content. 
 
-• Video Upload API: Create an API endpoint that allows users to upload a video file. 
+✅ Video Upload API: 
+Create an API endpoint that allows users to upload a video file.  
 The API should convert all uploads to a standard MP4 video format. Use a multipart form data upload. 
 This video should then be stored in the Supabase storage bucket you configured.
 
@@ -17,11 +18,11 @@ The output video should have the same format as the input videos
 The output video should be uploaded back to Supabase storage in a designated "merged" folder within your bucket
 
 
-• Video Metadata API: Create a new API endpoint that accepts a video ID and returns the metadata of the video. The Metadata returned should include the duration, the format, the codec, the resolution, the bitrate, and the frame rate. You'll need to use the ffprobe tool from the FFmpeg suite to extract this information.
+✅ Video Metadata API: Create a new API endpoint that accepts a video ID and returns the metadata of the video. The Metadata returned should include the duration, the format, the codec, the resolution, the bitrate, and the frame rate. You'll need to use the ffprobe tool from the FFmpeg suite to extract this information. 
 
 • Download API: The merged video should then be accessible to the user via a download link, provided through another API endpoint.
 
-• Dockerization: Dockerize the application ensuring all dependencies (like FFmpeg) are included in the Docker image. Write a Dockerfile that can be used to build a Docker image of the service.
+✅ Dockerization: Dockerize the application ensuring all dependencies (like FFmpeg) are included in the Docker image. Write a Dockerfile that can be used to build a Docker image of the service. 
 
 ## Installation
 

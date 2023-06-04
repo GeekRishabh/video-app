@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { StorageClient } from '@supabase/storage-js';
-
+import * as fs from 'fs';
 import { getRootPath, blobToFile } from '../utils/';
 @Injectable()
 export class SupabaseService {
@@ -21,22 +21,21 @@ export class SupabaseService {
   public async uploadFile(bucketName: string, file: any) {
     return await this.storageClient
       .from(bucketName)
-      .upload(file.originalname, file.buffer);
+      .upload(`${new Date()}-${file.originalname}`, file.buffer);
   }
 
-  public async downloadFile(bucketName: string, fileName: string) {
-    console.log(bucketName, fileName, 'fileNamefileName');
+  public async downloadFile(
+    bucketName: string,
+    fileName: string,
+  ): Promise<string> {
     const { data, error } = await this.storageClient
       .from(bucketName.trim())
       .download(`/${fileName}`);
-
-    const string = await data.text();
-    const type = data.type;
-    console.log(type, data, 'datadatadatadata');
-    console.log('errorerrorerror', error);
-    const response = blobToFile(data, getRootPath());
-    console.log(response, 'response');
-    return data;
+    const blob = data;
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const filePath = `${getRootPath()}/temp/${fileName}`;
+    await fs.promises.writeFile(`${filePath}`, buffer);
+    return filePath;
   }
 
   public async emptyBucket(bucketName: string) {
@@ -88,6 +87,6 @@ export class SupabaseService {
   public async getSignedUrl(bucketName: string, fileName: string) {
     return await this.storageClient
       .from(bucketName)
-      .createSignedUrl(`/${fileName}`, 360000);
+      .createSignedUrl(`/${fileName}`, 3600);
   }
 }

@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { createFFmpeg } from '@ffmpeg/ffmpeg';
+// import { path as ffmpegPath } from '@ffmpeg-installer/ffmpeg';
 import * as ffmpeg from 'fluent-ffmpeg';
+import * as fs from 'fs';
+import { Readable } from 'stream';
 
+import { getRootPath } from '../utils';
 import { SupabaseService } from '../supabase/supabase.service';
+
+const ffprobe = require('ffprobe');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffprobeStatic = require('ffprobe-static');
+ffmpeg.setFfmpegPath(ffmpegPath);
 @Injectable()
 export class VideoService {
   constructor(private supabaseService: SupabaseService) {}
@@ -20,16 +28,22 @@ export class VideoService {
       if (!bucket.data || bucket.data === null) {
         await this.supabaseService.createBucket(bucketName);
       }
-      console.log(file, 'file');
       // Make file convert to mp4
-      // const processedFile = this.convert(file); //
-      return await this.supabaseService.uploadFile(
-        process.env.UPLOAD_BUCKETNAME,
-        file,
+      const fileName = file.originalname.substring(
+        0,
+        file.originalname.indexOf('.'),
       );
-      // const blob = data;
-      // const buffer = Buffer.from( await blob.arrayBuffer() );
-      // await fs.promises.writeFile(fileName, buffer);
+      const processedFile = await this.convert(file);
+      const uploadFile = {
+        buffer: new Buffer(''),
+        originalname: `${fileName}.mp4`,
+      };
+      file.buffer = fs.readFileSync(processedFile);
+      await this.supabaseService.uploadFile(
+        process.env.UPLOAD_BUCKETNAME,
+        uploadFile,
+      );
+      this.deleteTempFile(processedFile);
     } catch (error) {
       console.log(error, 'upload error');
     }
@@ -67,14 +81,40 @@ export class VideoService {
   }
 
   private async convert(file: any) {
-    // Create a command to convert source.avi to MP4
-    let command = ffmpeg();
-    command = ffmpeg('/path/to/source.avi')
-      .audioCodec('libfaac')
-      .videoCodec('libx264')
-      .format('mp4');
-
+    const buffer = new Buffer(file.buffer, 'base64');
+    const readable = new Readable();
+    readable.push(buffer);
+    readable.push(null);
+    const command = ffmpeg().input(readable).format('mp4');
+    const fileName = file.originalname.substring(
+      0,
+      file.originalname.indexOf('.'),
+    );
+    const path = `${getRootPath()}/temp/${fileName}.mp4`;
     // Save a converted version with the original size
-    command.save('/path/to/output-original-size.mp4');
+    await command.save(`${path}`);
+    return path;
+  }
+
+  private deleteTempFile(filePath: string) {
+    fs.unlink(filePath, (err) => {
+      if (err) throw err; //handle your error the way you want to;
+      console.log(`${filePath} was deleted`);
+    });
+  }
+
+  async getMetaData(filename: string): Promise<any> {
+    const filePath = await this.supabaseService.downloadFile(
+      process.env.UPLOAD_BUCKETNAME,
+      filename,
+    );
+    return ffprobe(`${filePath}`, { path: ffprobeStatic.path })
+      .then((info) => {
+        this.deleteTempFile(filePath);
+        return info?.streams[0];
+      })
+      .catch((err: Error) => {
+        return err;
+      });
   }
 }

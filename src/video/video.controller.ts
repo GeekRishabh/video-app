@@ -21,14 +21,14 @@ export class VideoController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
     try {
-      const response = await this.videoService.upload(
+      const response = this.videoService.upload(
         process.env.UPLOAD_BUCKETNAME,
         file,
       );
       console.log(response, 'response');
-      return response;
+      return { data: {}, success: true };
     } catch (error) {
       console.log(error, '>>>');
     }
@@ -39,9 +39,21 @@ export class VideoController {
     console.log(file);
   }
 
-  @Get('download')
-  downloadFile(@Param() params: any) {
-    console.log(params.id);
+  @Get('download/:id')
+  async downloadFile(@Param() params: any) {
+    try {
+      return await this.supabaseService.getSignedUrl(
+        process.env.MERGE_BUCKETNAME,
+        params.id,
+      );
+    } catch (error) {}
+  }
+
+  @Get('metadata/:id')
+  async getMetaData(@Param() params: any) {
+    try {
+      return await this.videoService.getMetaData(params.id);
+    } catch (error) {}
   }
 
   @Get('signedUrl')
