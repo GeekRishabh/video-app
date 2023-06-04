@@ -58,7 +58,7 @@ $ npm run test:cov
 ## Swagger
 
 Swagger Docs are available at
-Dev Env -> http://localhost:3000/api
+Dev Env -> http://localhost:3000/docs
 
 
 ## Deploying on Docker
